@@ -111,7 +111,7 @@ export class UsersService {
     userId: string,
     ecdhPublicKey: string,
     ecdsaPublicKey: string,
-  ): Promise<void> {
+  ): Promise<User> {
     const result = await this.userModel
       .findByIdAndUpdate(
         userId,
@@ -120,12 +120,13 @@ export class UsersService {
           ecdsaPublicKey,
           keysUpdatedAt: new Date(),
         },
-        { new: false },
+        { new: true },
       )
       .exec();
 
     if (!result) {
       throw new NotFoundException('User không tồn tại');
     }
+    return result;
   }
 }
