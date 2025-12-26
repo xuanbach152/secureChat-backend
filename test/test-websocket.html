@@ -1,0 +1,525 @@
+<!doctype html>
+<html>
+  <head>
+    <title>SecureChat WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+      .panel {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+      }
+      button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        transition: opacity 0.2s;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      .btn-connect {
+        background: #4caf50;
+        color: white;
+      }
+      .btn-disconnect {
+        background: #f44336;
+        color: white;
+      }
+      .btn-send {
+        background: #2196f3;
+        color: white;
+        width: 100%;
+      }
+      .status {
+        padding: 12px;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: bold;
+        margin: 15px 0;
+      }
+      .status.connected {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status.disconnected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .chat-container {
+        background: #fafafa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+      }
+      .messages {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        height: 400px;
+        overflow-y: auto;
+        padding: 15px;
+        margin-bottom: 10px;
+      }
+      .message {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        max-width: 70%;
+        word-wrap: break-word;
+      }
+      .message.sent {
+        background: #e3f2fd;
+        margin-left: auto;
+        text-align: right;
+      }
+      .message.received {
+        background: #f1f8e9;
+        margin-right: auto;
+      }
+      .message .sender {
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 5px;
+        color: #555;
+      }
+      .message .content {
+        font-size: 14px;
+        color: #222;
+        margin-bottom: 5px;
+      }
+      .message .time {
+        font-size: 11px;
+        color: #999;
+      }
+      .message .read-status {
+        font-size: 11px;
+        color: #4caf50;
+        margin-top: 3px;
+      }
+      .message.unread {
+        border-left: 3px solid #2196f3;
+      }
+      .typing-indicator {
+        min-height: 20px;
+        padding: 5px 10px;
+        font-style: italic;
+        color: #666;
+        font-size: 13px;
+      }
+      .message-input-area {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .message-input-area textarea {
+        flex: 1;
+        resize: none;
+      }
+      .log-panel {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .log-panel h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      .log {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        height: 200px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        color: #333;
+      }
+      .log div {
+        margin-bottom: 5px;
+        padding: 2px 0;
+      }
+      .hint {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #856404;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔒 SecureChat WebSocket Test</h1>
+
+    <div class="hint">
+      💡 <strong>Hướng dẫn:</strong> Mở file này trên 2 cửa sổ/trình duyệt khác
+      nhau để test chat giữa 2 users
+    </div>
+
+    <div class="panel">
+      <h2>👤 User Connection</h2>
+
+      <div class="form-group">
+        <label>Your JWT Token:</label>
+        <input id="token" type="text" placeholder="Paste your JWT token here" />
+      </div>
+
+      <div class="form-group">
+        <label>Other User ID (to chat with):</label>
+        <input
+          id="otherUserId"
+          type="text"
+          placeholder="Paste the other user's ID"
+        />
+      </div>
+
+      <div class="button-group">
+        <button class="btn-connect" onclick="connect()">🔌 Connect</button>
+        <button class="btn-disconnect" onclick="disconnect()">
+          ⛔ Disconnect
+        </button>
+      </div>
+
+      <div id="status" class="status disconnected">❌ Not Connected</div>
+    </div>
+
+    <div class="panel">
+      <div class="chat-container">
+        <h3>💬 Chat Messages</h3>
+        <div id="messages" class="messages"></div>
+        <div id="typing" class="typing-indicator"></div>
+        <div class="message-input-area">
+          <textarea
+            id="messageInput"
+            rows="3"
+            placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
+            onkeydown="handleKeyPress(event)"
+            onkeyup="handleTyping(event)"
+          ></textarea>
+        </div>
+        <button class="btn-send" onclick="sendMessage()">
+          📤 Send Message
+        </button>
+      </div>
+    </div>
+
+    <div class="log-panel">
+      <h3>📋 Event Logs</h3>
+      <div id="log" class="log"></div>
+    </div>
+
+    <script>
+      let socket = null;
+      let currentUserId = null;
+      let otherUserId = null;
+      let typingTimeout = null;
+      let unreadMessages = [];
+      let isWindowFocused = true;
+
+      // Track window focus
+      window.addEventListener('focus', () => {
+        isWindowFocused = true;
+        markUnreadMessagesAsRead();
+      });
+
+      window.addEventListener('blur', () => {
+        isWindowFocused = false;
+      });
+
+      function log(message, type = 'info') {
+        const logDiv = document.getElementById('log');
+        const time = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.innerHTML = `<strong>[${time}]</strong> ${message}`;
+        logDiv.appendChild(logEntry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+      }
+
+      function addMessage(message, isSent) {
+        const messagesDiv = document.getElementById('messages');
+        const msgDiv = document.createElement('div');
+
+        const isUnread = !isSent && !isWindowFocused;
+        msgDiv.className = `message ${isSent ? 'sent' : 'received'} ${isUnread ? 'unread' : ''}`;
+        msgDiv.dataset.messageId = message._id || Date.now();
+
+        const sender =
+          message.senderId?.username || message.senderId || 'Unknown';
+        const content = message.encryptedContent || message.content || '';
+        const time = new Date(
+          message.createdAt || Date.now(),
+        ).toLocaleTimeString();
+
+        let readStatus = '';
+        if (isSent) {
+          readStatus = '<div class="read-status">✓ Sent</div>';
+        }
+
+        msgDiv.innerHTML = `
+          <div class="sender">${sender}</div>
+          <div class="content">${content}</div>
+          <div class="time">${time}</div>
+          ${readStatus}
+        `;
+
+        messagesDiv.appendChild(msgDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        // Track unread messages
+        if (isUnread) {
+          unreadMessages.push({
+            id: msgDiv.dataset.messageId,
+            element: msgDiv,
+          });
+        }
+      }
+
+      function markUnreadMessagesAsRead() {
+        if (unreadMessages.length === 0 || !socket || !otherUserId) return;
+
+        // Remove unread styling
+        unreadMessages.forEach((msg) => {
+          msg.element.classList.remove('unread');
+        });
+
+        // Send mark as read event
+        socket.emit('markAsRead', { senderId: otherUserId });
+        log('✓ Marked ' + unreadMessages.length + ' message(s) as read');
+
+        unreadMessages = [];
+      }
+
+      function updateMessageReadStatus() {
+        const messages = document.querySelectorAll('.message.sent');
+        messages.forEach((msgDiv) => {
+          const readStatusDiv = msgDiv.querySelector('.read-status');
+          if (readStatusDiv) {
+            readStatusDiv.innerHTML = '✓✓ Read';
+            readStatusDiv.style.color = '#4CAF50';
+          }
+        });
+      }
+
+      function connect() {
+        const token = document.getElementById('token').value.trim();
+        otherUserId = document.getElementById('otherUserId').value.trim();
+
+        if (!token) {
+          alert('⚠️ Please enter your JWT token');
+          return;
+        }
+
+        if (!otherUserId) {
+          alert('⚠️ Please enter the other user ID to chat with');
+          return;
+        }
+
+        socket = io('http://localhost:3000', {
+          auth: { token },
+        });
+
+        socket.on('connect', () => {
+          log('✅ Connected to server (Socket ID: ' + socket.id + ')');
+          document.getElementById('status').className = 'status connected';
+          document.getElementById('status').innerHTML = '✅ Connected';
+
+          // Auto join room
+          socket.emit('joinRoom', { otherUserId }, (response) => {
+            log('🔗 Joined chat room: ' + response.roomId);
+          });
+
+          // Get current user's ID from profile
+          fetch('http://localhost:3000/auth/profile', {
+            headers: {
+              Authorization: 'Bearer ' + token,
+            },
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              currentUserId = data._id;
+              log('📝 Current user ID: ' + currentUserId);
+            })
+            .catch((err) => {
+              log('⚠️ Could not get user profile');
+            });
+        });
+
+        socket.on('disconnect', () => {
+          log('❌ Disconnected from server');
+          document.getElementById('status').className = 'status disconnected';
+          document.getElementById('status').innerHTML = '❌ Disconnected';
+        });
+
+        socket.on('newMessage', (data) => {
+          const sender = data.senderId?.username || 'Other user';
+          const isSentByMe =
+            data.senderId?._id === currentUserId ||
+            data.receiverId?._id === otherUserId;
+
+          log('📨 New message from ' + sender);
+          addMessage(data, isSentByMe);
+
+          // Only mark as read if window is focused
+          if (!isSentByMe && isWindowFocused) {
+            setTimeout(() => {
+              socket.emit('markAsRead', { senderId: otherUserId });
+              log('✓ Marked message as read');
+            }, 500);
+          }
+        });
+
+        socket.on('messagesRead', (data) => {
+          log('✓✓ Your messages have been read');
+          updateMessageReadStatus();
+        });
+
+        socket.on('userTyping', (data) => {
+          // Only show typing indicator if it's from the other user, not ourselves
+          if (data.userId === currentUserId) {
+            // This is our own typing event, ignore it
+            return;
+          }
+
+          const typingDiv = document.getElementById('typing');
+          typingDiv.innerHTML = '✍️ Other user is typing...';
+
+          clearTimeout(window.typingIndicatorTimeout);
+          window.typingIndicatorTimeout = setTimeout(() => {
+            typingDiv.innerHTML = '';
+          }, 3000);
+        });
+
+        socket.on('connect_error', (error) => {
+          log('❌ Connection error: ' + error.message);
+          alert('Connection failed! Check your JWT token.');
+        });
+      }
+
+      function disconnect() {
+        if (socket) {
+          socket.disconnect();
+          socket = null;
+          log('⛔ Manually disconnected');
+          document.getElementById('status').className = 'status disconnected';
+          document.getElementById('status').innerHTML = '❌ Not Connected';
+        }
+      }
+
+      function sendMessage() {
+        if (!socket) {
+          alert('⚠️ Please connect first!');
+          return;
+        }
+
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value.trim();
+        const receiverId = document.getElementById('otherUserId').value.trim();
+
+        if (!message) {
+          alert('⚠️ Please enter a message');
+          return;
+        }
+
+        socket.emit(
+          'sendMessage',
+          {
+            receiverId,
+            encryptedContent: message,
+          },
+          (response) => {
+            if (response && response.success) {
+              messageInput.value = '';
+              log('✉️ Message sent: "' + message + '"');
+            }
+          },
+        );
+      }
+
+      function handleKeyPress(event) {
+        // Send message on Enter (without Shift)
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          sendMessage();
+        }
+      }
+
+      function handleTyping(event) {
+        if (!socket) return;
+
+        const receiverId = document.getElementById('otherUserId').value.trim();
+        if (!receiverId) return;
+
+        // Don't send typing on Enter
+        if (event.key === 'Enter') return;
+        const messageInput = document.getElementById('messageInput');
+        if (messageInput.value.trim().length === 0) return;
+
+        // Debounce typing events
+        clearTimeout(typingTimeout);
+        socket.emit('typing', { receiverId });
+
+        typingTimeout = setTimeout(() => {
+          // Typing stopped
+        }, 1000);
+      }
+
+      // Auto-focus on message input when connected
+      document.addEventListener('DOMContentLoaded', () => {
+        log(
+          '👋 Welcome! Enter your credentials and click Connect to start chatting',
+        );
+      });
+    </script>
+  </body>
+</html>

@@ -7,6 +7,7 @@ import configuration from './config/configuration';
 import { UsersModule } from './users/user.module';
 import { AuthModule } from './auth/auth.module';
 import { KeysModule } from './keys/keys.module';
+import { MessagesModule } from './messages/messages.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -23,6 +24,7 @@ import { KeysModule } from './keys/keys.module';
     UsersModule,
     AuthModule,
     KeysModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
