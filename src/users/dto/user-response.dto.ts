@@ -4,8 +4,8 @@ import { User } from '../schemas/user.schema';
 @Exclude()
 export class UserResponseDto {
   @Expose()
-  @Transform(({ obj }: { obj: User }) => obj._id?.toString() ?? '')
-  id!: string;
+  @Transform(({ obj }: { obj: User }) => obj._id?.toString() || '')
+  _id!: string;
 
   @Expose()
   email!: string;
