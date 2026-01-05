@@ -21,7 +21,11 @@ export class MessagesService {
       senderId,
       dto.sessionId,
     );
+    console.log(session);
     const roomId = this.getRoomId(senderId, dto.receiverId);
+
+    const messageExpiresAt = new Date();
+    messageExpiresAt.setDate(messageExpiresAt.getDate() + 90);
 
     const message = await this.messageModel.create({
       senderId: new Types.ObjectId(senderId),
@@ -32,7 +36,7 @@ export class MessagesService {
       iv: dto.iv || null,
       signature: dto.signature || null,
       messageKeyInfo: dto.messageKeyInfo,
-      expiresAt: session.expiresAt,
+      expiresAt: messageExpiresAt,
       isRead: false,
     });
     return message.populate([

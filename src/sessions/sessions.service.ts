@@ -343,44 +343,27 @@ export class SessionsService {
     console.log(`Cleaned up ${result.modifiedCount} expired sessions`);
     return result.modifiedCount;
   }
-  /**
-   * DEVELOPMENT ONLY - Create session WITHOUT signature verification
-   * ⚠️ DO NOT USE IN PRODUCTION
-   */
+
   async devGetOrCreateSessionNoVerify(
     myUserId: string,
     dto: { otherUserId: string; ecdhPublicKey: string; ecdhSignature: string },
   ): Promise<SessionResponseDto> {
     const { otherUserId, ecdhPublicKey, ecdhSignature } = dto;
 
-    console.warn('⚠️  DEV MODE: Skipping ECDSA signature verification');
-    console.log(`🔍 Debug: myUserId = ${myUserId}`);
-    console.log(`🔍 Debug: otherUserId = ${otherUserId}`);
-
-    // Security Check 1: Prevent self-chat
     if (myUserId === otherUserId) {
       throw new BadRequestException('Cannot create session with yourself');
     }
 
-    // Check users exist
-    console.log(`🔍 Finding myUser with ID: ${myUserId}`);
     const myUser = await this.userModel.findById(myUserId);
     if (!myUser) {
-      console.error(`❌ User not found with ID: ${myUserId}`);
       throw new UnauthorizedException('User not found');
     }
-    console.log(`✅ Found myUser: ${myUser.email}`);
 
-    console.log(`🔍 Finding otherUser with ID: ${otherUserId}`);
     const otherUser = await this.userModel.findById(otherUserId);
     if (!otherUser) {
-      console.error(`❌ Other user not found with ID: ${otherUserId}`);
       throw new NotFoundException('Other user not found');
     }
-    console.log(`✅ Found otherUser: ${otherUser.email}`);
 
-    // Skip signature verification in dev mode
-    // Rest of logic same as getOrCreateSession
     const myActiveSession = await this.findActiveSession(myUserId, otherUserId);
     const otherActiveSession = await this.findActiveSession(
       otherUserId,

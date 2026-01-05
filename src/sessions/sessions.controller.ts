@@ -66,7 +66,6 @@ export class SessionsController {
     return { deletedCount: count };
   }
 
-  // ===== DEVELOPMENT ONLY - Bypass signature verification =====
   @Post('dev/get-or-create-no-verify')
   @HttpCode(HttpStatus.OK)
   async devGetOrCreateSessionNoVerify(
