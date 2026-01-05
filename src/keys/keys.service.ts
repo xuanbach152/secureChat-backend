@@ -27,7 +27,7 @@ export class KeysService {
     }
     return plainToInstance(KeysResponseDto, {
       userId: user._id.toString(),
-      ecdhPublicKey: user.ecdhPublicKey ?? null,
+      ecdhPublicKey: null,
       ecdsaPublicKey: user.ecdsaPublicKey ?? null,
       keysUpdatedAt: user.keysUpdatedAt ?? null,
     });

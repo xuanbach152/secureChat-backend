@@ -8,11 +8,14 @@ import { MessagesController } from './messages.controller';
 
 import { Message, MessageSchema } from './schemas/message.schema';
 import { UsersModule } from '../users/user.module';
+import { SessionsModule } from '../sessions/sessions.module';
+
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
 
     UsersModule,
+    SessionsModule,
 
     JwtModule.register({}),
   ],

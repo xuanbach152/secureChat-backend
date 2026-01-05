@@ -34,4 +34,17 @@ export class MessageResponseDto {
 
   @Expose()
   updatedAt: Date;
+
+  @Expose()
+  sessionId: string;
+
+  @Expose()
+  messageKeyInfo: {
+    messageId: string;
+    nonce: string;
+    sessionId: string;
+  };
+
+  @Expose()
+  expiresAt?: Date;
 }

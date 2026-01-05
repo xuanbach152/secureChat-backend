@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 
 export enum AuthProvider {
@@ -7,7 +7,15 @@ export enum AuthProvider {
   GOOGLE = 'google',
 }
 
-// Interface cho instance methods
+export interface UserSession {
+  sessionId: string;
+  otherUserId: Types.ObjectId;
+  ecdhPublicKey: string;
+  ecdhSignature: string; // ECDSA signature of ecdhPublicKey để verify authenticity
+  createdAt: Date;
+  expiresAt: Date;
+}
+
 export interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -82,17 +90,40 @@ export class User extends Document implements IUserMethods {
     type: String,
     default: null,
   })
-  ecdhPublicKey?: string;
-
-  @Prop({
-    type: String,
-    default: null,
-  })
   ecdsaPublicKey?: string;
 
   @Prop({
     type: Date,
     default: null,
+  })
+  ecdsaUpdatedAt?: Date;
+
+  @Prop({
+    type: [
+      {
+        sessionId: { type: String, required: true },
+        otherUserId: { type: Types.ObjectId, required: true, ref: 'User' },
+        ecdhPublicKey: { type: String, required: true },
+        ecdhSignature: { type: String, required: true },
+        createdAt: { type: Date, required: true },
+        expiresAt: { type: Date, required: true },
+      },
+    ],
+    default: [],
+  })
+  sessions!: UserSession[];
+
+  @Prop({
+    type: String,
+    default: null,
+    select: false,
+  })
+  ecdhPublicKey?: string;
+
+  @Prop({
+    type: Date,
+    default: null,
+    select: false,
   })
   keysUpdatedAt?: Date;
 
@@ -102,7 +133,6 @@ export class User extends Document implements IUserMethods {
   @Prop({ default: () => new Date() })
   lastSeen!: Date;
 
-  // Method implementation sẽ được thêm vào schema
   comparePassword!: (candidatePassword: string) => Promise<boolean>;
 }
 

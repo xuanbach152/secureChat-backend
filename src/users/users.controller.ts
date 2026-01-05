@@ -48,6 +48,20 @@ export class UserController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('online')
+  async getOnlineUsers(
+    @Request() req: RequestWithUser,
+  ): Promise<UserResponseDto[]> {
+    const currentUserId = req.user._id.toString();
+    const users = await this.usersService.findOnlineUsers(currentUserId);
+    return users.map((user) =>
+      plainToInstance(UserResponseDto, user, {
+        excludeExtraneousValues: true,
+      }),
+    );
+  }
+
   @Get(':id')
   async getUserById(@Param('id') id: string): Promise<UserResponseDto> {
     const user = await this.usersService.findById(id);

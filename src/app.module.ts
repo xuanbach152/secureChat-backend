@@ -8,6 +8,8 @@ import { UsersModule } from './users/user.module';
 import { AuthModule } from './auth/auth.module';
 import { KeysModule } from './keys/keys.module';
 import { MessagesModule } from './messages/messages.module';
+import { SessionsModule } from './sessions/sessions.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,6 +27,7 @@ import { MessagesModule } from './messages/messages.module';
     AuthModule,
     KeysModule,
     MessagesModule,
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

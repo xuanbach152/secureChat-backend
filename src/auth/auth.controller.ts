@@ -67,8 +67,8 @@ export class AuthController {
     const { accessToken } = await this.authService.googleLogin(req.user);
 
     const frontendUrl =
-      this.configService.get<string>('frontendUrl') || 'http://localhost:5173';
+      this.configService.get<string>('frontendUrl') || 'http://localhost:3001';
 
-    return res.redirect(`${frontendUrl}?token=${accessToken}`);
+    return res.redirect(`${frontendUrl}/callback?token=${accessToken}`);
   }
 }

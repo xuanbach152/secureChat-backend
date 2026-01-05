@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsNotEmpty, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsMongoId,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { MessageKeyInfoDto } from './messages-key-info';
 
 export class SendMessageDto {
   @IsNotEmpty()
@@ -7,13 +14,22 @@ export class SendMessageDto {
 
   @IsNotEmpty()
   @IsString()
+  sessionId: string;
+
+  @IsNotEmpty()
+  @IsString()
   encryptedContent: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  iv?: string;
+  iv: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  signature?: string;
+  signature: string;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => MessageKeyInfoDto)
+  messageKeyInfo: MessageKeyInfoDto;
 }

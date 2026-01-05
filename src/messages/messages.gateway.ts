@@ -16,6 +16,8 @@ import { MessagesService } from './messages.service';
 import { UsersService } from '../users/users.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { SessionsService } from 'src/sessions/sessions.service';
+import { WsException } from '@nestjs/websockets';
 
 interface SocketData {
   userId: string;
@@ -51,6 +53,7 @@ export class MessagesGateway
     private readonly configService: ConfigService,
     private readonly messagesService: MessagesService,
     private readonly usersService: UsersService,
+    private sessionsService: SessionsService,
   ) {}
   async handleConnection(client: AuthSocket) {
     try {
@@ -103,6 +106,12 @@ export class MessagesGateway
   ) {
     const senderId = client.data.userId;
 
+    try {
+      await this.sessionsService.getSessionById(senderId, dto.sessionId);
+    } catch (error) {
+      console.log(error);
+      throw new WsException('Session not found or expired');
+    }
     const message = await this.messagesService.createMessage(senderId, dto);
 
     const roomId = message.roomId;

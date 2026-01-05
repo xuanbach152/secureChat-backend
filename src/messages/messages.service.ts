@@ -3,11 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message, MessageDocument } from './schemas/message.schema';
 import { SendMessageDto } from './dto/send-message.dto';
+import { SessionsService } from '../sessions/sessions.service';
 @Injectable()
 export class MessagesService {
   constructor(
     @InjectModel(Message.name)
     private readonly messageModel: Model<MessageDocument>,
+    private sessionsService: SessionsService,
   ) {}
 
   getRoomId(userId1: string, userId2: string): string {
@@ -15,15 +17,22 @@ export class MessagesService {
   }
 
   async createMessage(senderId: string, dto: SendMessageDto) {
+    const session = await this.sessionsService.getSessionById(
+      senderId,
+      dto.sessionId,
+    );
     const roomId = this.getRoomId(senderId, dto.receiverId);
 
     const message = await this.messageModel.create({
       senderId: new Types.ObjectId(senderId),
       receiverId: new Types.ObjectId(dto.receiverId),
       roomId,
+      sessionId: dto.sessionId,
       encryptedContent: dto.encryptedContent,
       iv: dto.iv || null,
       signature: dto.signature || null,
+      messageKeyInfo: dto.messageKeyInfo,
+      expiresAt: session.expiresAt,
       isRead: false,
     });
     return message.populate([

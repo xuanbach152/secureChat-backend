@@ -107,6 +107,17 @@ export class UsersService {
       lastSeen: isOnline ? new Date() : new Date(),
     });
   }
+
+  async findOnlineUsers(excludeUserId: string): Promise<User[]> {
+    return this.userModel
+      .find({
+        _id: { $ne: excludeUserId },
+        isOnline: true,
+      })
+      .select('_id email username displayName avatarUrl isOnline')
+      .exec();
+  }
+
   async updateKeys(
     userId: string,
     ecdhPublicKey: string,
